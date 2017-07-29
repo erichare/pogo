@@ -2,6 +2,7 @@ library(shiny)
 library(shinythemes)
 library(googlesheets)
 library(dplyr)
+library(tidyr)
 library(ggplot2)
 library(rvest)
 library(stringr)
@@ -89,8 +90,8 @@ joined_attackers <- ourpoke %>%
 raid_bosses <- read_csv("raid_counters.csv") %>%
     mutate(Type = factor(Type, levels = c("Supreme", "Good", "Glass", "Tank")))
 
-type_colors <- c("blue", "darkblue", "grey", "peru", "lightgreen", "yellow", "darkred", "orangered1", "darkgreen", "bisque3", "lightblue", "purple", "indianred2", "lightsteelblue1", "black")
-names(type_colors) <- c("Water", "Dragon", "Normal", "Rock", "Bug", "Electric", "Fighting", "Fire", "Grass", "Ground", "Ice", "Poison", "Psychic", "Steel", "Dark")
+type_colors <- c("blue", "darkblue", "grey", "peru", "lightgreen", "yellow", "darkred", "orangered1", "darkgreen", "bisque3", "lightblue", "purple", "indianred2", "lightsteelblue1", "black", "slategray2")
+names(type_colors) <- c("Water", "Dragon", "Normal", "Rock", "Bug", "Electric", "Fighting", "Fire", "Grass", "Ground", "Ice", "Poison", "Psychic", "Steel", "Dark", "Flying")
 
 ui <- fluidPage(theme = shinytheme("cerulean"),
     
@@ -99,6 +100,9 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
     sidebarLayout(
         sidebarPanel(
             selectInput("trainer", "Trainer", choices = unique(joined_attackers$Trainer)),
+            conditionalPanel(condition = "input.tabs1 == 'Attack Team'",
+                             selectInput("type", "Type", choices = c("Primary Type", "Secondary Type", "Primary and Secondary Type"))
+            ),
             conditionalPanel(condition = "input.tabs1 == 'Raid Counters'",
                              selectInput("boss", "Raid Boss", choices = sort(unique(raid_bosses$Boss)),
                                          selected = "Machamp")
@@ -134,17 +138,28 @@ server <- function(input, output) {
     })
     
     output$type_coverage <- renderPlot({
-        missings <- setdiff(names(type_colors), unique(mydat()$`Primary Type`))
-            
-        type_plot <- mydat() %>%
-            mutate(`Primary Type` = factor(`Primary Type`, levels = c(names(sort(table(`Primary Type`), decreasing = TRUE)), missings)))
-        ggplot(data = type_plot, aes(x = `Primary Type`, fill = `Primary Type`)) +
+        missings <- setdiff(names(type_colors), unique(c(mydat()$`Primary Type`, mydat()$`Secondary Type`)))
+        
+        if (input$type == "Primary and Secondary Type") {
+            type_plot <- mydat() %>%
+                gather(key = Which, value = Type, 7:8) %>%
+                mutate(Type = factor(Type, levels = c(names(sort(table(Type), decreasing = TRUE)), missings))) %>%
+                filter(!is.na(Type))
+        } else if (input$type == "Primary Type") {
+            type_plot <- mydat() %>%
+                mutate(Type = factor(`Primary Type`, levels = c(names(sort(table(`Primary Type`), decreasing = TRUE)), missings)))
+        } else if (input$type == "Secondary Type") {
+            type_plot <- mydat() %>%
+                mutate(Type = factor(`Secondary Type`, levels = c(names(sort(table(`Secondary Type`), decreasing = TRUE)), missings))) %>%
+                filter(!is.na(Type))
+        }
+        ggplot(data = type_plot, aes(x = Type, fill = Type)) +
             geom_bar() +
             scale_x_discrete(drop = FALSE) +
             theme_bw() +
-            scale_fill_manual(values = type_colors[match(levels(type_plot$`Primary Type`), names(type_colors))]) +
+            scale_fill_manual(values = type_colors[match(levels(type_plot$Type), names(type_colors))]) +
             theme(legend.position = "off") +
-            ggtitle(paste0(input$trainer, "'s Attack Team by Primary Type")) +
+            ggtitle(paste0(input$trainer, "'s Attack Team by ", input$type)) +
             xlab("Type") +
             ylab("Count")
     })
