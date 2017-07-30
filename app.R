@@ -4,90 +4,9 @@ library(googlesheets)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
-library(rvest)
-library(stringr)
 library(readr)
 
-# url <- "https://pokemongo.gamepress.gg/raid-boss-counters"
-# my_nodes <- url %>%
-#     read_html() %>%
-#     html_nodes(css = ".raid-boss-pokemon-title a , #block-views-block-raid-boss-counters-block-1 .field--type-string") %>%
-#     html_text()
-# 
-# my_quick_moves <- url %>%
-#     read_html() %>%
-#     html_nodes(css = ".raid-pokemon-quick-move a , .raid-pokemon+ th") %>%
-#     html_text()
-# 
-# my_charge_moves <- url %>%
-#     read_html() %>%
-#     html_nodes(css = ".raid-pokemon-charge-move a , th+ th") %>%
-#     html_text()
-# 
-# mylist <- list()
-# for (i in 6:length(my_nodes)) {
-#     if (str_count(my_nodes[i], "Supreme Counters") == 1 || str_count(my_nodes[i], "Supreme Counter") == 1) {
-#         boss <- my_nodes[i - 1]
-#         if (length(mylist) > 1) mylist <- mylist[1:(length(mylist) - 1)]
-#     }
-#     
-#     if (str_count(my_nodes[i], "Counters") == 1 || str_count(my_nodes[i], "Counter") == 1) {
-#         type <- strsplit(my_nodes[i], " ")[[1]][1]
-#     } else {
-#         poke <- my_nodes[i]
-#         mylist[[length(mylist) + 1]] <- c(boss, poke, type)
-#     }
-# }
-# 
-# mydf <- as.data.frame(do.call(rbind, mylist), stringsAsFactors = FALSE)
-# names(mydf) <- c("Boss", "Counter", "Type")
-# 
-# pokemon_ind <- 0
-# mylist_quick <- list()
-# for (i in 1:length(my_quick_moves)) {
-#     if (my_quick_moves[i] == "Quick Move") {
-#         pokemon_ind <- pokemon_ind + 1
-#     } else {
-#         poke_list <- c(unlist(mydf[pokemon_ind,]), Quick = my_quick_moves[i])
-#         mylist_quick[[length(mylist_quick) + 1]] <- poke_list
-#     }
-# }
-# 
-# mydf_quick <- as.data.frame(do.call(rbind, mylist_quick), stringsAsFactors = FALSE)
-# names(mydf_quick) <- c("Boss", "Counter", "Type", "Fast Attack")
-# 
-# pokemon_ind <- 0
-# mylist_charge <- list()
-# for (i in 1:length(my_charge_moves)) {
-#     if (my_charge_moves[i] == "Charge Move") {
-#         pokemon_ind <- pokemon_ind + 1
-#     } else {
-#         poke_list <- c(unlist(mydf[pokemon_ind,]), Charge = my_charge_moves[i])
-#         mylist_charge[[length(mylist_charge) + 1]] <- poke_list
-#     }
-# }
-# 
-# mydf_charge <- as.data.frame(do.call(rbind, mylist_charge), stringsAsFactors = FALSE)
-# names(mydf_charge) <- c("Boss", "Counter", "Type", "Charged Attack")
-# 
-# mydf_merge <- full_join(mydf_quick, mydf_charge) %>%
-#     filter(!duplicated(.))
-# 
-# write.csv(mydf_merge, file = "raid_counters.csv", row.names = FALSE)
-
-pogo <- gs_key("1eMIur0WMbAf13HSEZsrxvF-ZInUIVte8UMyOnN9v5Is")
-
-attackers <- pogo %>% 
-    gs_read(ws = 1) %>%
-    select(Pokemon, `Fast Attack`, `Charged Attack`, `Primary Type`, `Secondary Type`, `Move Rating`)
-ourpoke <- pogo %>% 
-    gs_read(ws = 2) %>%
-    select(Trainer, Pokemon, `Fast Attack`, `Charged Attack`, CP, IV = `IV (%)`)
-
-joined_attackers <- ourpoke %>%
-    left_join(attackers)
-
-raid_bosses <- read_csv("raid_counters.csv") %>%
+raid_bosses <- read_csv("data/raid_counters.csv") %>%
     mutate(Type = factor(Type, levels = c("Supreme", "Good", "Glass", "Tank")))
 
 type_colors <- c("blue", "darkblue", "grey", "peru", "lightgreen", "yellow", "darkred", "orangered1", "darkgreen", "bisque3", "lightblue", "purple", "indianred2", "lightsteelblue1", "black", "slategray2")
@@ -99,8 +18,8 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
     
     sidebarLayout(
         sidebarPanel(
-            conditionalPanel(condition = "input.tabs1 != 'User Statistics'",
-                             selectInput("trainer", "Trainer", choices = unique(joined_attackers$Trainer)) 
+            conditionalPanel(condition = "input.tabs1 == 'Attack Team' || input.tabs1 == 'Raid Counters'",
+                             selectInput("trainer", "Trainer", choices = NULL) 
             ),
             conditionalPanel(condition = "input.tabs1 == 'Attack Team'",
                              selectInput("type", "Type", choices = c("Primary Type", "Secondary Type", "Primary and Secondary Type"))
@@ -108,6 +27,12 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
             conditionalPanel(condition = "input.tabs1 == 'Raid Counters'",
                              selectInput("boss", "Raid Boss", choices = sort(unique(raid_bosses$Boss)),
                                          selected = "Machamp")
+            ),
+            conditionalPanel(condition = "input.tabs1 == 'Catch Rates'",
+                             checkboxInput("curve", "Curve Ball"),
+                             sliderInput("radius", "Circle Radius", min = 0, max = 1, value = 1),
+                             selectInput("berry", "Berry", choices = c("None" = 1, "Razz Berry" = 1.5, "Golden Razz Berry" = 2.5)),
+                             selectInput("medal", "Medal", choices = c("None" = 1, "Bronze" = 1.1, "Silver" = 1.2, "Gold" = 1.3))
             )
         ),
         
@@ -127,6 +52,17 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                          h4("All Possible Counters"),
                          dataTableOutput("possible_counters")
                 ),
+                tabPanel("Catch Rates",
+                         h4("The Simulation"),
+                         h5(textOutput("prob")),
+                         h5(textOutput("prob2")),
+                         hr(),
+                         plotOutput("cumprob"),
+                         hr(),
+                         h4("The Formulas"),
+                         h3(withMathJax("$$\\text{Probability} = 1 - \\left(1 - \\frac{BCR}{2 \\times CPM}\\right)^{\\text{Multipliers}}$$")),
+                         h4(withMathJax("$$BCR = .03$$"))
+                ),
                 tabPanel("User Statistics",
                          dataTableOutput("stats")
                 )
@@ -135,10 +71,28 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
     )
 )
 
-server <- function(input, output) {
+server <- function(input, output, session) {
+
+    observe({
+        updateSelectInput(session, "trainer", choices = unique(sort(joined_attackers()$Trainer)))
+    })
+    
+    joined_attackers <- reactive({
+        pogo <- gs_key("1eMIur0WMbAf13HSEZsrxvF-ZInUIVte8UMyOnN9v5Is")
+        
+        attackers <- pogo %>% 
+            gs_read(ws = 1) %>%
+            select(Pokemon, `Fast Attack`, `Charged Attack`, `Primary Type`, `Secondary Type`, `Move Rating`)
+        ourpoke <- pogo %>% 
+            gs_read(ws = 2) %>%
+            select(Trainer, Pokemon, `Fast Attack`, `Charged Attack`, CP, IV = `IV (%)`)
+        
+        ourpoke %>%
+            left_join(attackers)
+    })
     
     mydat <- reactive({
-        joined_attackers %>%
+        joined_attackers() %>%
             filter(Trainer == input$trainer)
     })
     
@@ -195,7 +149,7 @@ server <- function(input, output) {
     })
     
     output$stats <- renderDataTable({
-        joined_attackers %>%
+        joined_attackers() %>%
             group_by(Trainer) %>%
             summarise(`Avg CP` = round(mean(CP)),
                       `Avg IV` = round(mean(IV)),
@@ -204,7 +158,44 @@ server <- function(input, output) {
                       `Most Common Charged` = head(names(sort(table(`Charged Attack`), decreasing = TRUE)), n = 1),
                       `Most Common Type` = head(names(sort(table(`Primary Type`), decreasing = TRUE)), n = 1))
     })
+    
+    catchprob <- reactive({
+        curvemult <- ifelse(input$curve, 1.7, 1)
+        radmult <- 2 - input$radius
+        berrymult <- as.numeric(input$berry)
+        medalmult <- as.numeric(input$medal)
         
+        result <- 1 - (1 - .03)^(curvemult * radmult * berrymult * medalmult)
+        
+        return(result)
+    })
+    
+    output$prob <- renderText({
+        return(paste("With a single premiere ball, your chances of catching the legendary are", paste0(round(100 * catchprob(), digits = 2), "%")))
+    })
+    
+    output$prob2 <- renderText({
+        return(paste("With seven premiere balls, your chances of catching the legendary are", paste0(round(100 * (1 - (1 - catchprob())^7), digits = 2), "%")))
+    })
+    
+    output$cumprob <- renderPlot({
+        cumprobs <- 1 - (1 - catchprob())^(1:25)
+        
+        mydf <- data.frame(Balls = 1:25, CatchProb = cumprobs, Text = rep("", 25), stringsAsFactors = FALSE)
+        mydf$Text[c(1, 7)] <- paste0(round(100 * cumprobs[c(1, 7)], digits = 2), "%")
+        
+        ggplot(data = mydf, aes(x = Balls, y = CatchProb, colour = CatchProb)) +
+            geom_point(size = 2.5) +
+            geom_line() +
+            geom_text(aes(label = Text, vjust = 1, hjust = -0.2)) +
+            theme_bw() +
+            ggtitle("Probability of Catching the Legendary Within the Given Number of Balls") +
+            geom_hline(yintercept = .5) +
+            xlab("Number of Balls Thrown") +
+            ylab("Catch Probability") +
+            scale_y_continuous(breaks = seq(0, 1, by = .1), labels = seq(0, 1, by = .1), limits = c(0, 1)) +
+            scale_color_gradient(low = "#FF0000", high = "#00FF00", limits = c(0, 1))
+    })
 }
 
 shinyApp(ui = ui, server = server)
