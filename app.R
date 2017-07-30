@@ -34,6 +34,7 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                              hr(),
                              h4("Multipliers"),
                              numericInput("rate", "Base Catch Rate (Articuno = .03, Lugia = .02)", value = .03, step = .01),
+                             numericInput("balls", "Number of Premiere Balls", value = 25, min = 5, max = 100),
                              sliderInput("radius", "Circle Radius", min = 0, max = 1, value = 1),
                              checkboxInput("curve", "Curve Ball"),
                              selectInput("berry", "Berry", choices = c("None" = 1, "Razz Berry" = 1.5, "Golden Razz Berry" = 2.5)),
@@ -62,6 +63,7 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                          h4("The Simulation"),
                          h5(textOutput("prob")),
                          h5(textOutput("prob2")),
+                         h5(textOutput("prob3")),
                          hr(),
                          plotOutput("cumprob"),
                          hr(),
@@ -99,7 +101,8 @@ server <- function(input, output, session) {
     
     mydat <- reactive({
         joined_attackers() %>%
-            filter(Trainer == input$trainer)
+            filter(Trainer == input$trainer) %>%
+            arrange(desc(CP))
     })
     
     output$type_coverage <- renderPlot({
@@ -185,23 +188,29 @@ server <- function(input, output, session) {
         return(paste("With seven premiere balls, your chances of catching the legendary are", paste0(round(100 * (1 - (1 - catchprob())^7), digits = 2), "%")))
     })
     
+    output$prob3 <- renderText({
+        return(paste("With", input$balls, "premiere balls, your chances of catching the legendary are", paste0(round(100 * (1 - (1 - catchprob())^input$balls), digits = 2), "%")))
+    })
+    
     output$cumprob <- renderPlot({
-        cumprobs <- 1 - (1 - catchprob())^(1:25)
+        cumprobs <- 1 - (1 - catchprob())^(1:input$balls)
         
-        mydf <- data.frame(Balls = 1:25, CatchProb = cumprobs, Text = rep("", 25), stringsAsFactors = FALSE)
-        mydf$Text[c(1, 7)] <- paste0(round(100 * cumprobs[c(1, 7)], digits = 2), "%")
+        mydf <- data.frame(Balls = 1:input$balls, CatchProb = cumprobs, Text = rep("", input$balls), stringsAsFactors = FALSE)
+        mydf$Text[c(1, 7, input$balls)] <- paste0(round(100 * cumprobs[c(1, 7, input$balls)], digits = 2), "%")
+        
+        mybreaks <- seq(0, input$balls, by = ceiling(input$balls / 50))
         
         ggplot(data = mydf, aes(x = Balls, y = CatchProb, colour = CatchProb)) +
             geom_point(size = 2.5) +
             geom_line() +
-            geom_text(aes(label = Text, vjust = 1, hjust = -0.2)) +
+            geom_text(aes(label = Text, vjust = 1.7, hjust = 0.3)) +
             theme_bw() +
-            ggtitle("Probability of Catching the Legendary Within the Given Number of Balls") +
+            ggtitle("Probability of Catching the Legendary Within the Given Number of Throws") +
             geom_hline(yintercept = .5) +
-            xlab("Number of Balls Thrown") +
+            xlab("Number of Premiere Balls Thrown") +
             ylab("Catch Probability") +
             scale_y_continuous(breaks = seq(0, 1, by = .1), labels = seq(0, 1, by = .1), limits = c(0, 1)) +
-            scale_x_continuous(breaks = 0:25, minor_breaks = NULL) +
+            scale_x_continuous(breaks = mybreaks, minor_breaks = NULL) +
             scale_color_gradient(low = "#FF0000", high = "#00FF00", limits = c(0, 1))
     })
 }
