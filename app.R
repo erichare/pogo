@@ -29,12 +29,16 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                                          selected = "Machamp")
             ),
             conditionalPanel(condition = "input.tabs1 == 'Catch Rates'",
-                             helpText("Enter the throw parameters below. For the Circle Radius, a value of 1 means the circle was as big as possible. An average nice throw has a radius of 0.85, and average great throw has a radius of 0.5, and an average excellent throw has a radius of 0.15"),
+                             h4("Instructions"),
+                             HTML("Enter the throw parameters below.<br><br>For the Circle Radius, a value of 1 means the circle was as big as possible. An average nice throw has a radius of 0.85, and average great throw has a radius of 0.5, and an average excellent throw has a radius of 0.15<br><br>For the badges, choose each of the two types. For instance, against Articuno, if you have the Gold flying badge but the Silver ice badge, select Gold for the first and Silver for the second."),
+                             hr(),
+                             h4("Multipliers"),
                              numericInput("rate", "Base Catch Rate (Articuno = .03, Lugia = .02)", value = .03, step = .01),
-                             checkboxInput("curve", "Curve Ball"),
                              sliderInput("radius", "Circle Radius", min = 0, max = 1, value = 1),
+                             checkboxInput("curve", "Curve Ball"),
                              selectInput("berry", "Berry", choices = c("None" = 1, "Razz Berry" = 1.5, "Golden Razz Berry" = 2.5)),
-                             selectInput("medal", "Medal", choices = c("None" = 1, "Bronze" = 1.1, "Silver" = 1.2, "Gold" = 1.3))
+                             selectInput("medal1", "Badge 1", choices = c("None" = 1, "Bronze" = 1.1, "Silver" = 1.2, "Gold" = 1.3)),
+                             selectInput("medal2", "Badge 2", choices = c("None" = 1, "Bronze" = 1.1, "Silver" = 1.2, "Gold" = 1.3))
             )
         ),
         
@@ -61,11 +65,11 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                          hr(),
                          plotOutput("cumprob"),
                          hr(),
-                         h4("The Formulas"),
-                         h3(withMathJax("$$\\text{Probability} = 1 - \\left(1 - \\frac{BCR}{2 \\times CPM}\\right)^{\\text{Multipliers}}$$")),
-                         h4(withMathJax("$$BCR = .03$$"))
+                         h4("The Formula"),
+                         h3(withMathJax("$$\\text{Probability} = 1 - \\left(1 - \\frac{BCR}{2 \\times CPM}\\right)^{\\text{Multipliers}}$$"))
                 ),
                 tabPanel("User Statistics",
+                         h4("Statistics by Trainer"),
                          dataTableOutput("stats")
                 )
             )
@@ -165,7 +169,7 @@ server <- function(input, output, session) {
         curvemult <- ifelse(input$curve, 1.7, 1)
         radmult <- 2 - input$radius
         berrymult <- as.numeric(input$berry)
-        medalmult <- as.numeric(input$medal)
+        medalmult <- (as.numeric(input$medal1) + as.numeric(input$medal2)) / 2
         cpm <- 0.79030001
         
         result <- 1 - (1 - input$rate /  (2 * cpm))^(curvemult * radmult * berrymult * medalmult)
@@ -197,6 +201,7 @@ server <- function(input, output, session) {
             xlab("Number of Balls Thrown") +
             ylab("Catch Probability") +
             scale_y_continuous(breaks = seq(0, 1, by = .1), labels = seq(0, 1, by = .1), limits = c(0, 1)) +
+            scale_x_continuous(breaks = 0:25, minor_breaks = NULL) +
             scale_color_gradient(low = "#FF0000", high = "#00FF00", limits = c(0, 1))
     })
 }
