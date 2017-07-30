@@ -99,7 +99,9 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
     
     sidebarLayout(
         sidebarPanel(
-            selectInput("trainer", "Trainer", choices = unique(joined_attackers$Trainer)),
+            conditionalPanel(condition = "input.tabs1 != 'User Statistics'",
+                             selectInput("trainer", "Trainer", choices = unique(joined_attackers$Trainer)) 
+            ),
             conditionalPanel(condition = "input.tabs1 == 'Attack Team'",
                              selectInput("type", "Type", choices = c("Primary Type", "Secondary Type", "Primary and Secondary Type"))
             ),
@@ -124,6 +126,9 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                          hr(),
                          h4("All Possible Counters"),
                          dataTableOutput("possible_counters")
+                ),
+                tabPanel("User Statistics",
+                         dataTableOutput("stats")
                 )
             )
         )
@@ -187,6 +192,17 @@ server <- function(input, output) {
             arrange(Type) %>%
             rename(`Counter Type` = Type) %>%
             select(-Boss)
+    })
+    
+    output$stats <- renderDataTable({
+        joined_attackers %>%
+            group_by(Trainer) %>%
+            summarise(`Avg CP` = round(mean(CP)),
+                      `Avg IV` = round(mean(IV)),
+                      `Most Common Pokemon` = head(names(sort(table(Pokemon), decreasing = TRUE)), n = 1),
+                      `Most Common Fast` = head(names(sort(table(`Fast Attack`), decreasing = TRUE)), n = 1),
+                      `Most Common Charged` = head(names(sort(table(`Charged Attack`), decreasing = TRUE)), n = 1),
+                      `Most Common Type` = head(names(sort(table(`Primary Type`), decreasing = TRUE)), n = 1))
     })
         
 }
