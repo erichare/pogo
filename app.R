@@ -19,7 +19,7 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
     sidebarLayout(
         sidebarPanel(
             conditionalPanel(condition = "input.tabs1 == 'Attack Team' || input.tabs1 == 'Raid Counters'",
-                             selectInput("trainer", "Trainer", choices = NULL) 
+                             selectInput("trainer", "Trainer", choices = "AB", selected = "AB") 
             ),
             conditionalPanel(condition = "input.tabs1 == 'Attack Team'",
                              selectInput("type", "Type", choices = c("Primary Type", "Secondary Type", "Primary and Secondary Type"))
@@ -29,6 +29,8 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                                          selected = "Machamp")
             ),
             conditionalPanel(condition = "input.tabs1 == 'Catch Rates'",
+                             helpText("Enter the throw parameters below. For the Circle Radius, a value of 1 means the circle was as big as possible. An average nice throw has a radius of 0.85, and average great throw has a radius of 0.5, and an average excellent throw has a radius of 0.15"),
+                             numericInput("rate", "Base Catch Rate (Articuno = .03, Lugia = .02)", value = .03, step = .01),
                              checkboxInput("curve", "Curve Ball"),
                              sliderInput("radius", "Circle Radius", min = 0, max = 1, value = 1),
                              selectInput("berry", "Berry", choices = c("None" = 1, "Razz Berry" = 1.5, "Golden Razz Berry" = 2.5)),
@@ -164,8 +166,9 @@ server <- function(input, output, session) {
         radmult <- 2 - input$radius
         berrymult <- as.numeric(input$berry)
         medalmult <- as.numeric(input$medal)
+        cpm <- 0.79030001
         
-        result <- 1 - (1 - .03)^(curvemult * radmult * berrymult * medalmult)
+        result <- 1 - (1 - input$rate /  (2 * cpm))^(curvemult * radmult * berrymult * medalmult)
         
         return(result)
     })
