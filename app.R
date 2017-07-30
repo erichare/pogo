@@ -138,17 +138,21 @@ server <- function(input, output) {
     })
     
     output$type_coverage <- renderPlot({
-        missings <- setdiff(names(type_colors), unique(c(mydat()$`Primary Type`, mydat()$`Secondary Type`)))
-        
         if (input$type == "Primary and Secondary Type") {
+            missings <- setdiff(names(type_colors), unique(c(mydat()$`Primary Type`, mydat()$`Secondary Type`)))
+            
             type_plot <- mydat() %>%
                 gather(key = Which, value = Type, 7:8) %>%
                 mutate(Type = factor(Type, levels = c(names(sort(table(Type), decreasing = TRUE)), missings))) %>%
                 filter(!is.na(Type))
         } else if (input$type == "Primary Type") {
+            missings <- setdiff(names(type_colors), unique(mydat()$`Primary Type`))
+            
             type_plot <- mydat() %>%
                 mutate(Type = factor(`Primary Type`, levels = c(names(sort(table(`Primary Type`), decreasing = TRUE)), missings)))
         } else if (input$type == "Secondary Type") {
+            missings <- setdiff(names(type_colors), unique(mydat()$`Secondary Type`))
+            
             type_plot <- mydat() %>%
                 mutate(Type = factor(`Secondary Type`, levels = c(names(sort(table(`Secondary Type`), decreasing = TRUE)), missings))) %>%
                 filter(!is.na(Type))
