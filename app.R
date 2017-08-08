@@ -27,19 +27,6 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
             conditionalPanel(condition = "input.tabs1 == 'Raid Counters'",
                              selectInput("boss", "Raid Boss", choices = sort(unique(raid_bosses$Boss)),
                                          selected = "Machamp")
-            ),
-            conditionalPanel(condition = "input.tabs1 == 'Catch Rates'",
-                             h4("Instructions"),
-                             HTML("Enter the throw parameters below.<br><br>For the Circle Radius, a value of 1 means the circle was as big as possible. An average nice throw has a radius of 0.85, and average great throw has a radius of 0.5, and an average excellent throw has a radius of 0.15<br><br>For the badges, choose each of the two types. For instance, against Articuno, if you have the Gold flying badge but the Silver ice badge, select Gold for the first and Silver for the second."),
-                             hr(),
-                             h4("Multipliers"),
-                             numericInput("rate", "Base Catch Rate (Articuno = .03, Lugia = .02)", value = .03, step = .01),
-                             numericInput("balls", "Number of Premiere Balls", value = 25, min = 5, max = 100),
-                             sliderInput("radius", "Circle Radius", min = 0, max = 1, value = 1),
-                             checkboxInput("curve", "Curve Ball"),
-                             selectInput("berry", "Berry", choices = c("None" = 1, "Razz Berry" = 1.5, "Golden Razz Berry" = 2.5)),
-                             selectInput("medal1", "Badge 1", choices = c("None" = 1, "Bronze" = 1.1, "Silver" = 1.2, "Gold" = 1.3)),
-                             selectInput("medal2", "Badge 2", choices = c("None" = 1, "Bronze" = 1.1, "Silver" = 1.2, "Gold" = 1.3))
             )
         ),
         
@@ -58,17 +45,6 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                          hr(),
                          h4("All Possible Counters"),
                          dataTableOutput("possible_counters")
-                ),
-                tabPanel("Catch Rates",
-                         h4("The Simulation"),
-                         h5(textOutput("prob")),
-                         h5(textOutput("prob2")),
-                         h5(textOutput("prob3")),
-                         hr(),
-                         plotOutput("cumprob"),
-                         hr(),
-                         h4("The Formula"),
-                         h3(withMathJax("$$\\text{Probability} = 1 - \\left(1 - \\frac{BCR}{2 \\times CPM}\\right)^{\\text{Multipliers}}$$"))
                 ),
                 tabPanel("User Statistics",
                          h4("Statistics by Trainer"),
@@ -166,52 +142,6 @@ server <- function(input, output, session) {
                       `Most Common Fast` = head(names(sort(table(`Fast Attack`), decreasing = TRUE)), n = 1),
                       `Most Common Charged` = head(names(sort(table(`Charged Attack`), decreasing = TRUE)), n = 1),
                       `Most Common Type` = head(names(sort(table(`Primary Type`), decreasing = TRUE)), n = 1))
-    })
-    
-    catchprob <- reactive({
-        curvemult <- ifelse(input$curve, 1.7, 1)
-        radmult <- 2 - input$radius
-        berrymult <- as.numeric(input$berry)
-        medalmult <- (as.numeric(input$medal1) + as.numeric(input$medal2)) / 2
-        cpm <- 0.79030001
-        
-        result <- 1 - (1 - input$rate /  (2 * cpm))^(curvemult * radmult * berrymult * medalmult)
-        
-        return(result)
-    })
-    
-    output$prob <- renderText({
-        return(paste("With a single premiere ball, your chances of catching the legendary are", paste0(round(100 * catchprob(), digits = 2), "%")))
-    })
-    
-    output$prob2 <- renderText({
-        return(paste("With seven premiere balls, your chances of catching the legendary are", paste0(round(100 * (1 - (1 - catchprob())^7), digits = 2), "%")))
-    })
-    
-    output$prob3 <- renderText({
-        return(paste("With", input$balls, "premiere balls, your chances of catching the legendary are", paste0(round(100 * (1 - (1 - catchprob())^input$balls), digits = 2), "%")))
-    })
-    
-    output$cumprob <- renderPlot({
-        cumprobs <- 1 - (1 - catchprob())^(1:input$balls)
-        
-        mydf <- data.frame(Balls = 1:input$balls, CatchProb = cumprobs, Text = rep("", input$balls), stringsAsFactors = FALSE)
-        mydf$Text[c(1, 7, input$balls)] <- paste0(round(100 * cumprobs[c(1, 7, input$balls)], digits = 2), "%")
-        
-        mybreaks <- seq(0, input$balls, by = ceiling(input$balls / 50))
-        
-        ggplot(data = mydf, aes(x = Balls, y = CatchProb, colour = CatchProb)) +
-            geom_point(size = 2.5) +
-            geom_line() +
-            geom_text(aes(label = Text, vjust = 1.7, hjust = 0.3)) +
-            theme_bw() +
-            ggtitle("Probability of Catching the Legendary Within the Given Number of Throws") +
-            geom_hline(yintercept = .5) +
-            xlab("Number of Premiere Balls Thrown") +
-            ylab("Catch Probability") +
-            scale_y_continuous(breaks = seq(0, 1, by = .1), labels = seq(0, 1, by = .1), limits = c(0, 1)) +
-            scale_x_continuous(breaks = mybreaks, minor_breaks = NULL) +
-            scale_color_gradient(low = "#FF0000", high = "#00FF00", limits = c(0, 1))
     })
 }
 
