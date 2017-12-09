@@ -9,8 +9,8 @@ library(readr)
 raid_bosses <- read_csv("data/raid_counters.csv") %>%
     mutate(Type = factor(Type, levels = c("Supreme", "Good", "Glass", "Tank")))
 
-type_colors <- c("blue", "darkblue", "grey", "peru", "lightgreen", "yellow", "darkred", "orangered1", "darkgreen", "bisque3", "lightblue", "purple", "indianred2", "lightsteelblue1", "black", "slategray2", "purple4", "pink")
-names(type_colors) <- c("Water", "Dragon", "Normal", "Rock", "Bug", "Electric", "Fighting", "Fire", "Grass", "Ground", "Ice", "Poison", "Psychic", "Steel", "Dark", "Flying", "Ghost", "Fairy")
+type_colors <- c("blue", "darkblue", "grey", "peru", "lightgreen", "yellow", "pink", "darkred", "orangered1", "purple3", "darkgreen", "bisque3", "lightblue", "purple", "indianred2", "lightsteelblue1", "black", "slategray2", "purple4", "pink")
+names(type_colors) <- c("Water", "Dragon", "Normal", "Rock", "Bug", "Electric", "Fairy", "Fighting", "Fire", "Ghost", "Grass", "Ground", "Ice", "Poison", "Psychic", "Steel", "Dark", "Flying", "Ghost", "Fairy")
 
 ui <- fluidPage(theme = shinytheme("cerulean"),
     
