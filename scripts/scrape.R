@@ -5,7 +5,7 @@ library(stringr)
 url <- "https://pokemongo.gamepress.gg/raid-boss-counters"
 my_nodes <- url %>%
     read_html() %>%
-    html_nodes(css = ".raid-boss-pokemon-title a , #block-views-block-raid-boss-counters-block-1 .field--type-string") %>%
+    html_nodes(css = ".field--name-field-title , #block-gamepressbase-content .field--name-title , .raid-boss-pokemon-title a") %>%
     html_text()
 
 my_quick_moves <- url %>%
@@ -19,6 +19,8 @@ my_charge_moves <- url %>%
     html_text()
 
 mylist <- list()
+my_nodes[my_nodes %in% c("Supreme", "Good", "Glass", "Tank")] <- paste(my_nodes[my_nodes %in% c("Supreme", "Good", "Glass", "Tank")], "Counters")
+my_nodes <- my_nodes[!(my_nodes %in% c("Mawile", "Absol", "Groudon"))]
 for (i in 6:length(my_nodes)) {
     if (str_count(my_nodes[i], "Supreme Counters") == 1 || str_count(my_nodes[i], "Supreme Counter") == 1) {
         boss <- my_nodes[i - 1]
@@ -67,4 +69,4 @@ names(mydf_charge) <- c("Boss", "Counter", "Type", "Charged Attack")
 mydf_merge <- full_join(mydf_quick, mydf_charge) %>%
     filter(!duplicated(.))
 
-write.csv(mydf_merge, file = "raid_counters.csv", row.names = FALSE)
+write.csv(mydf_merge, file = "data/raid_counters.csv", row.names = FALSE)
