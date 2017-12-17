@@ -20,7 +20,7 @@ my_charge_moves <- url %>%
 
 mylist <- list()
 my_nodes[my_nodes %in% c("Supreme", "Good", "Glass", "Tank")] <- paste(my_nodes[my_nodes %in% c("Supreme", "Good", "Glass", "Tank")], "Counters")
-my_nodes <- my_nodes[!(my_nodes %in% c("Mawile", "Absol", "Groudon"))]
+my_nodes <- my_nodes[!(my_nodes %in% c("Mawile", "Absol"))]
 for (i in 6:length(my_nodes)) {
     if (str_count(my_nodes[i], "Supreme Counters") == 1 || str_count(my_nodes[i], "Supreme Counter") == 1) {
         boss <- my_nodes[i - 1]
@@ -41,7 +41,7 @@ names(mydf) <- c("Boss", "Counter", "Type")
 pokemon_ind <- 0
 mylist_quick <- list()
 for (i in 1:length(my_quick_moves)) {
-    if (my_quick_moves[i] == "Quick Move") {
+    if (my_quick_moves[i] == "Fast Move") {
         pokemon_ind <- pokemon_ind + 1
     } else {
         poke_list <- c(unlist(mydf[pokemon_ind,]), Quick = my_quick_moves[i])

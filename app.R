@@ -5,6 +5,7 @@ library(dplyr)
 library(tidyr)
 library(ggplot2)
 library(readr)
+library(shinycssloaders)
 
 raid_bosses <- read_csv("data/raid_counters.csv") %>%
     mutate(Type = factor(Type, levels = c("Supreme", "Good", "Glass", "Tank")))
@@ -34,10 +35,10 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
             tabsetPanel(id = "tabs1",
                 tabPanel("Attack Team",
                          h4("Attack Team Plot"),
-                         plotOutput("type_coverage"),
+                         withSpinner(plotOutput("type_coverage")),
                          hr(),
                          h4("Attack Team Data"),
-                         dataTableOutput("attack")
+                         withSpinner(dataTableOutput("attack"))
                 ),
                 tabPanel("Raid Counters",
                          h4("Your Counters"),
