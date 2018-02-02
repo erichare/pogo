@@ -122,7 +122,7 @@ server <- function(input, output, session) {
             left_join(raid_bosses, by = c("Pokemon" = "Counter", "Fast Attack" = "Fast Attack", "Charged Attack" = "Charged Attack")) %>%
             filter(Boss == input$boss) %>%
             arrange(Type) %>%
-            rename(`Counter Type` = Type) %>%
+            select(`Counter Type` = Type, everything()) %>%
             select(-Boss)
     })
     
@@ -130,7 +130,7 @@ server <- function(input, output, session) {
         raid_bosses %>%
             filter(Boss == input$boss) %>%
             arrange(Type) %>%
-            rename(`Counter Type` = Type) %>%
+            select(`Counter Type` = Type, everything()) %>%
             select(-Boss)
     })
     
