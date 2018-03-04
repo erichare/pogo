@@ -5,11 +5,12 @@ library(stringr)
 base_url <- "https://pokemongo.gamepress.gg"
 url <- file.path(base_url, "raid-boss-counters")
 
-raid_bosses <- url %>%
-    read_html() %>%
-    html_nodes(css = ".views-field-path a")
+system("phantomjs generate_html.js")
+
+raid_bosses <- read_html("full_counters.html") %>%
+    html_nodes(".no-weather a")
 raid_bosses_url <- paste0(base_url, html_attr(raid_bosses, "href"))
-raid_bosses_names <- gsub(" \n", "", html_text(raid_bosses))
+raid_bosses_names <- gsub("  \n\n\n ", "", html_text(raid_bosses))
 
 mydf <- data.frame(name = raid_bosses_names, url = raid_bosses_url)
 
