@@ -1,4 +1,4 @@
-﻿Trainer,Pokemon,Quick,Charge,CP,IV (%),Level,Attack IV,Defense IV,Stamina IV
+Trainer,Pokemon,Quick,Charge,CP,IV (%),Level,Attack IV,Defense IV,Stamina IV
 AB,Dragonite,Dragon Tail,Outrage,3267,98,,,,
 AB,Tyranitar,Bite,Stone Edge,3217,98,,,,
 AB,Tyranitar,Bite,Stone Edge,3163,93,,,,
@@ -59,7 +59,7 @@ ERH,Scizor,Bullet Punch,Iron Head,2747,84,40,14,10,14
 ERH,Swampert,Water Gun,Surf,2802,98,40,14,15,15
 ERH,Jolteon,Thunder Shock,Thunderbolt,2711,93,40,15,12,15
 ERH,Porygon2,Hidden Power (Ground),Hyper Beam,2539,98,40,15,14,15
-ERH,Hariyama,Counter,Dynamic Punch,2649,91,38,14,13,14
+ERH,Hariyama,Counter,Dynamic Punch,2727,91,40,14,13,14
 ERH,Sceptile,Bullet Seed,Leaf Blade,2584,100,40,15,15,15
 ERH,Blaziken,Counter,Focus Blast,2436,98,35,15,15,14
 ERH,Cloyster,Frost Breath,Blizzard,2405,84,40,14,14,10
