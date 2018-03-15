@@ -1,9 +1,9 @@
 library(shiny)
 library(shinythemes)
-library(googlesheets)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
+library(plotly)
 library(readr)
 library(shinycssloaders)
 
@@ -13,6 +13,15 @@ raid_bosses <- read_csv("data/raid_counters.csv") %>%
 type_colors <- c("blue", "darkblue", "grey", "peru", "lightgreen", "yellow", "pink", "darkred", "orangered1", "purple3", "darkgreen", "bisque3", "lightblue", "purple", "indianred2", "lightsteelblue1", "black", "slategray2", "purple4", "pink")
 names(type_colors) <- c("Water", "Dragon", "Normal", "Rock", "Bug", "Electric", "Fairy", "Fighting", "Fire", "Ghost", "Grass", "Ground", "Ice", "Poison", "Psychic", "Steel", "Dark", "Flying", "Ghost", "Fairy")
 
+pokes <- read_csv("data/poke_stats.csv")
+attackers <- read_csv("data/poke_grades.csv")
+ourpoke <- read_csv("data/our_poke.csv") %>%
+    rename(`ATK IV` = `Attack IV`, `DEF IV` = `Defense IV`, `STA IV` = `Stamina IV`)
+moves <- read_csv("data/poke_moves.csv")
+
+joined_attackers <- ourpoke %>%
+    left_join(attackers, by = c("Pokemon" = "Name", "Quick" = "Quick", "Charge" = "Charge"))
+
 ui <- fluidPage(theme = shinytheme("cerulean"),
     
     titlePanel("Pokemon Go Attackers"),
@@ -20,10 +29,10 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
     sidebarLayout(
         sidebarPanel(
             conditionalPanel(condition = "input.tabs1 == 'Attack Team' || input.tabs1 == 'Raid Counters'",
-                             selectInput("trainer", "Trainer", choices = "AB", selected = "AB") 
+                             selectInput("trainer", "Trainer", choices = unique(joined_attackers$Trainer), selected = "ERH") 
             ),
             conditionalPanel(condition = "input.tabs1 == 'Attack Team'",
-                             selectInput("type", "Type", choices = c("Primary Type", "Secondary Type", "Primary and Secondary Type"))
+                             selectInput("type", "Type", choices = c("Move Type", "Quick Move Type", "Charge Move Type", "Pokemon Type"))
             ),
             conditionalPanel(condition = "input.tabs1 == 'Raid Counters'",
                              selectInput("boss", "Raid Boss", choices = sort(unique(raid_bosses$Boss)),
@@ -50,6 +59,14 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                 tabPanel("User Statistics",
                          h4("Statistics by Trainer"),
                          dataTableOutput("stats")
+                ),
+                tabPanel("Pokemon Statistics",
+                         h4("Statistics by Pokemon"),
+                         dataTableOutput("poke_stats")
+                ),
+                tabPanel("Move Statistics",
+                         h4("Statistics by Move"),
+                         dataTableOutput("move_stats")
                 )
             )
         )
@@ -58,55 +75,45 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
 
 server <- function(input, output, session) {
 
-    observe({
-        updateSelectInput(session, "trainer", choices = unique(sort(joined_attackers()$Trainer)))
-    })
-    
-    joined_attackers <- reactive({
-        pogo <- gs_key("1eMIur0WMbAf13HSEZsrxvF-ZInUIVte8UMyOnN9v5Is")
-        
-        attackers <- pogo %>% 
-            gs_read(ws = 1) %>%
-            select(Pokemon, `Fast Attack`, `Charged Attack`, `Primary Type`, `Secondary Type`, `Move Rating`)
-        ourpoke <- pogo %>% 
-            gs_read(ws = 2) %>%
-            select(Trainer, Pokemon, `Fast Attack`, `Charged Attack`, CP, IV = `IV (%)`)
-        
-        ourpoke %>%
-            left_join(attackers)
-    })
-    
     mydat <- reactive({
-        joined_attackers() %>%
+        joined_attackers %>%
             filter(Trainer == input$trainer) %>%
             arrange(desc(CP))
     })
     
     output$type_coverage <- renderPlot({
-        if (input$type == "Primary and Secondary Type") {
-            missings <- setdiff(names(type_colors), unique(c(mydat()$`Primary Type`, mydat()$`Secondary Type`)))
-            
-            type_plot <- mydat() %>%
-                gather(key = Which, value = Type, 7:8) %>%
-                mutate(Type = factor(Type, levels = c(names(sort(table(Type), decreasing = TRUE)), missings))) %>%
-                filter(!is.na(Type))
-        } else if (input$type == "Primary Type") {
-            missings <- setdiff(names(type_colors), unique(mydat()$`Primary Type`))
-            
-            type_plot <- mydat() %>%
-                mutate(Type = factor(`Primary Type`, levels = c(names(sort(table(`Primary Type`), decreasing = TRUE)), missings)))
-        } else if (input$type == "Secondary Type") {
-            missings <- setdiff(names(type_colors), unique(mydat()$`Secondary Type`))
-            
-            type_plot <- mydat() %>%
-                mutate(Type = factor(`Secondary Type`, levels = c(names(sort(table(`Secondary Type`), decreasing = TRUE)), missings))) %>%
-                filter(!is.na(Type))
+        result <- mydat() %>%
+            left_join(select(moves, Name, `Quick Type` = `Pokemon Type`), by = c("Quick" = "Name")) %>%
+            left_join(select(moves, Name, `Charge Type` = `Pokemon Type`), by = c("Charge" = "Name")) %>%
+            left_join(select(pokes, Name, `First Pokemon Type` = `First Type`), by = c("Pokemon" = "Name")) %>%
+            left_join(select(pokes, Name, `Second Pokemon Type` = `Second Type`), by = c("Pokemon" = "Name"))
+        
+        if (input$type == "Move Type") {
+            plot_data <- result %>%
+                select(Pokemon, `Quick Type`, `Charge Type`) %>%
+                gather(key = Which, value = Type, 2:3)
+        } else if (input$type == "Quick Move Type") {
+            plot_data <- result %>%
+                select(Pokemon, Type = `Quick Type`)
+        } else if (input$type == "Charge Move Type") {
+            plot_data <- result %>%
+                select(Pokemon, Type = `Charge Type`)
+        } else if (input$type == "Pokemon Type") {
+            plot_data <- result %>%
+                select(Pokemon, `First Pokemon Type`, `Second Pokemon Type`) %>%
+                gather(key = Which, value = Type, 2:3)
         }
-        ggplot(data = type_plot, aes(x = Type, fill = Type)) +
+        
+        missings <- setdiff(names(type_colors), unique(plot_data$Type))
+        plot_data <- plot_data %>%
+            filter(!is.na(Type)) %>%
+            mutate(Type = factor(Type, levels = c(names(sort(table(Type), decreasing = TRUE)), missings)))
+      
+        ggplot(data = plot_data, aes(x = Type, fill = Type)) +
             geom_bar() +
             scale_x_discrete(drop = FALSE) +
             theme_bw() +
-            scale_fill_manual(values = type_colors[match(levels(type_plot$Type), names(type_colors))]) +
+            scale_fill_manual(values = type_colors[match(levels(plot_data$Type), names(type_colors))]) +
             theme(legend.position = "off") +
             ggtitle(paste0(input$trainer, "'s Attack Team by ", input$type)) +
             xlab("Type") +
@@ -114,16 +121,17 @@ server <- function(input, output, session) {
     })
     
     output$attack <- renderDataTable({
-        return(mydat())
+        return(mydat() %>%
+                   select(-Trainer))
     })
     
     output$counters <- renderDataTable({
         mydat() %>%
-            left_join(raid_bosses, by = c("Pokemon" = "Counter", "Fast Attack" = "Fast Attack", "Charged Attack" = "Charged Attack")) %>%
+            left_join(raid_bosses, by = c("Pokemon" = "Counter", "Quick" = "Fast Attack", "Charge" = "Charged Attack")) %>%
             filter(Boss == input$boss) %>%
             arrange(Type) %>%
             select(`Counter Type` = Type, everything()) %>%
-            select(-Boss)
+            select(-Boss, -Trainer)
     })
     
     output$possible_counters <- renderDataTable({
@@ -135,14 +143,21 @@ server <- function(input, output, session) {
     })
     
     output$stats <- renderDataTable({
-        joined_attackers() %>%
+        joined_attackers %>%
             group_by(Trainer) %>%
             summarise(`Avg CP` = round(mean(CP)),
-                      `Avg IV` = round(mean(IV)),
+                      `Avg IV` = round(mean(`IV (%)`)),
                       `Most Common Pokemon` = head(names(sort(table(Pokemon), decreasing = TRUE)), n = 1),
-                      `Most Common Fast` = head(names(sort(table(`Fast Attack`), decreasing = TRUE)), n = 1),
-                      `Most Common Charged` = head(names(sort(table(`Charged Attack`), decreasing = TRUE)), n = 1),
-                      `Most Common Type` = head(names(sort(table(`Primary Type`), decreasing = TRUE)), n = 1))
+                      `Most Common Quick` = head(names(sort(table(Quick), decreasing = TRUE)), n = 1),
+                      `Most Common Charge` = head(names(sort(table(Charge), decreasing = TRUE)), n = 1))
+    })
+        
+    output$poke_stats <- renderDataTable({
+        return(pokes)
+    })
+    
+    output$move_stats <- renderDataTable({
+        return(moves)
     })
 }
 
