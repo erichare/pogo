@@ -1,5 +1,6 @@
 library(shiny)
 library(shinythemes)
+library(googlesheets)
 library(dplyr)
 library(tidyr)
 library(ggplot2)
@@ -9,18 +10,12 @@ library(shinycssloaders)
 
 raid_bosses <- read_csv("data/raid_counters.csv") %>%
     mutate(Type = factor(Type, levels = c("Supreme", "Good", "Glass", "Tank")))
+pokes <- read_csv("data/poke_stats.csv")
+attackers <- read_csv("data/poke_grades.csv")
+moves <- read_csv("data/poke_moves.csv")
 
 type_colors <- c("blue", "darkblue", "grey", "peru", "lightgreen", "yellow", "pink", "darkred", "orangered1", "purple3", "darkgreen", "bisque3", "lightblue", "purple", "indianred2", "lightsteelblue1", "black", "slategray2", "purple4", "pink")
 names(type_colors) <- c("Water", "Dragon", "Normal", "Rock", "Bug", "Electric", "Fairy", "Fighting", "Fire", "Ghost", "Grass", "Ground", "Ice", "Poison", "Psychic", "Steel", "Dark", "Flying", "Ghost", "Fairy")
-
-pokes <- read_csv("data/poke_stats.csv")
-attackers <- read_csv("data/poke_grades.csv")
-ourpoke <- read_csv("data/our_poke.csv") %>%
-    rename(`ATK IV` = `Attack IV`, `DEF IV` = `Defense IV`, `STA IV` = `Stamina IV`)
-moves <- read_csv("data/poke_moves.csv")
-
-joined_attackers <- ourpoke %>%
-    left_join(attackers, by = c("Pokemon" = "Name", "Quick" = "Quick", "Charge" = "Charge"))
 
 ui <- fluidPage(theme = shinytheme("cerulean"),
     
@@ -29,7 +24,7 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
     sidebarLayout(
         sidebarPanel(
             conditionalPanel(condition = "input.tabs1 == 'Attack Team' || input.tabs1 == 'Raid Counters'",
-                             selectInput("trainer", "Trainer", choices = unique(joined_attackers$Trainer), selected = "ERH") 
+                             selectInput("trainer", "Trainer", choices = "ERH", selected = "ERH")
             ),
             conditionalPanel(condition = "input.tabs1 == 'Attack Team'",
                              selectInput("type", "Type", choices = c("Move Type", "Quick Move Type", "Charge Move Type", "Pokemon Type"))
@@ -74,9 +69,26 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
 )
 
 server <- function(input, output, session) {
+    
+    observe({
+        updateSelectInput(session, "trainer", choices = unique(sort(joined_attackers()$Trainer)), selected = input$trainer)
+    })
+    
+    joined_attackers <- reactive({
+        pogo <- gs_key("1eMIur0WMbAf13HSEZsrxvF-ZInUIVte8UMyOnN9v5Is")
+    
+        ourpoke <- pogo %>% 
+            gs_read(ws = 2) %>%
+            rename(Quick = `Fast Attack`, Charge = `Charged Attack`, LVL = Level, `ATK IV` = `Attack IV`, 
+                   `DEF IV` = `Defense IV`, `STA IV` = `Stamina IV`) %>%
+            select(Trainer:`STA IV`)
+        
+        ourpoke %>%
+            left_join(attackers, by = c("Pokemon" = "Name", "Quick" = "Quick", "Charge" = "Charge"))
+    })
 
     mydat <- reactive({
-        joined_attackers %>%
+        joined_attackers() %>%
             filter(Trainer == input$trainer) %>%
             arrange(desc(CP))
     })
@@ -143,7 +155,7 @@ server <- function(input, output, session) {
     })
     
     output$stats <- renderDataTable({
-        joined_attackers %>%
+        joined_attackers() %>%
             group_by(Trainer) %>%
             summarise(`Avg CP` = round(mean(CP)),
                       `Avg IV` = round(mean(`IV (%)`)),
