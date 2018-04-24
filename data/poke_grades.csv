@@ -1,10 +1,12 @@
 Name,Quick,Charge,ATK,DEF
-Venusaur,Vine Whip,Solar Beam,A,X
-Venusaur,Vine Whip,Petal Blizzard,B,X
+Venusaur,Vine Whip,Solar Beam,A-,X
+Venusaur,Vine Whip,Petal Blizzard,B-,X
 Venusaur,Vine Whip,Sludge Bomb,X,C
-Venusaur,Razor Leaf,Solar Beam,A,X
-Venusaur,Razor Leaf,Petal Blizzard,B,X
+Venusaur,Razor Leaf,Solar Beam,A-,X
+Venusaur,Razor Leaf,Petal Blizzard,B-,X
 Venusaur,Razor Leaf,Sludge Bomb,X,A
+Venusaur,Razor Leaf,Frenzy Plant,A,X
+Venusaur,Vine Whip,Frenzy Plant,A,X
 Charizard,Fire Spin,Overheat,A,X
 Charizard,Fire Spin,Fire Blast,C,X
 Charizard,Fire Spin,Flamethrower,A-,B
@@ -497,21 +499,19 @@ Seadra,Water Gun,Blizzard,B,B
 Seadra,Water Gun,Dragon Pulse,C,A
 Seadra,Dragon Breath,Blizzard,C,C
 Seadra,Dragon Breath,Dragon Pulse,C,A
-Seaking,Poison Jab,Drill Run,A,A
-Seaking,Poison Jab,Water Pulse,A,B
-Seaking,Poison Jab,Ice Beam,A,A
+Seaking,Poison Jab,Icy Wind,D,C
+Seaking,Peck,Icy Wind,D,C
+Seaking,Poison Jab,Megahorn,C,D
+Seaking,Peck,Megahorn,C,C
 Seaking,Peck,Drill Run,B,A
 Seaking,Peck,Water Pulse,B,B
 Seaking,Peck,Ice Beam,B,A
-Seaking,Poison Jab,Megahorn,C,D
-Seaking,Peck,Megahorn,C,C
-Seaking,Poison Jab,Icy Wind,D,C
-Seaking,Peck,Icy Wind,D,C
-Seaking,Waterfall,Ice Beam,,
-Seaking,Waterfall,Megahorn,,
-Seaking,Waterfall,Water Pulse,,
-Seaking,Waterfall,Drill Run,,
-Seaking,Waterfall,Icy Wind,,
+Seaking,Poison Jab,Drill Run,A,A
+Seaking,Poison Jab,Water Pulse,A,B
+Seaking,Poison Jab,Ice Beam,A,A
+Seaking,Waterfall,Ice Beam,X,X
+Seaking,Waterfall,Megahorn,X,X
+Seaking,Waterfall,Water Pulse,A,X
 Starmie,Water Gun,Hydro Pump,A,X
 Starmie,Hidden Power,Hydro Pump,B,B
 Starmie,Tackle,Hydro Pump,X,X
@@ -784,7 +784,9 @@ Ampharos,Volt Switch,Zap Cannon,A-,B
 Ampharos,Charge Beam,Thunder,B,C
 Ampharos,Volt Switch,Thunder,B,A-
 Ampharos,Charge Beam,Focus Blast,X,C
-Ampharos,Volt Switch,Focus Blast,X,A
+Ampharos,Volt Switch,Focus Blast,X,A-
+Ampharos,Volt Switch,Dragon Pulse,X,A
+Ampharos,Charge Beam,Dragon Pulse,X,C
 Bellossom,Razor Leaf,Leaf Blade,A,A
 Bellossom,Razor Leaf,Petal Blizzard,A,B
 Bellossom,Acid,Leaf Blade,B,C
@@ -1052,9 +1054,9 @@ Tyranitar,Bite,Fire Blast,C,X
 Tyranitar,Iron Tail,Crunch,C,A
 Tyranitar,Iron Tail,Stone Edge,C,B
 Tyranitar,Iron Tail,Fire Blast,X,C
-Lugia,Extrasensory,Sky Attack,A-,X
+Lugia,Extrasensory,Sky Attack,A,X
 Lugia,Extrasensory,Hydro Pump,X,X
-Lugia,Extrasensory,Future Sight,A,X
+Lugia,Extrasensory,Future Sight,A-,X
 Lugia,Dragon Tail,Sky Attack,B,X
 Lugia,Dragon Tail,Hydro Pump,X,X
 Lugia,Dragon Tail,Future Sight,X,X
@@ -1441,18 +1443,18 @@ Registeel,Metal Claw,Focus Blast,X,X
 Registeel,Rock Smash,Hyper Beam,X,X
 Registeel,Rock Smash,Focus Blast,X,X
 Registeel,Rock Smash,Flash Cannon,X,X
-Latias,Dragon Breath,Dragon Claw,X,X
-Latias,Dragon Breath,Psychic,X,X
-Latias,Dragon Breath,Thunder,X,X
-Latias,Zen Headbutt,Dragon Claw,X,X
-Latias,Zen Headbutt,Psychic,X,X
+Latias,Zen Headbutt,Psychic,A-,X
+Latias,Dragon Breath,Psychic,B,X
 Latias,Zen Headbutt,Thunder,X,X
-Latios,Dragon Breath,Dragon Claw,X,X
-Latios,Dragon Breath,Psychic,X,X
-Latios,Dragon Breath,Solar Beam,X,X
-Latios,Zen Headbutt,Dragon Claw,X,X
-Latios,Zen Headbutt,Psychic,X,X
-Latios,Zen Headbutt,Solar Beam,X,X
+Latias,Dragon Breath,Thunder,X,X
+Latias,Zen Headbutt,Outrage,B,X
+Latias,Dragon Breath,Outrage,A,X
+Latios,Dragon Breath,Dragon Claw,A,X
+Latios,Dragon Breath,Psychic,C,X
+Latios,Dragon Breath,Solar Beam,A-,X
+Latios,Zen Headbutt,Dragon Claw,B,X
+Latios,Zen Headbutt,Psychic,B,X
+Latios,Zen Headbutt,Solar Beam,C,X
 Kyogre,Waterfall,Hydro Pump,A,X
 Kyogre,Waterfall,Blizzard,C,X
 Kyogre,Waterfall,Thunder,C,X
@@ -1468,3 +1470,15 @@ Rayquaza,Dragon Tail,Ancient Power,X,X
 Rayquaza,Air Slash,Outrage,B,X
 Rayquaza,Air Slash,Aerial Ace,B,X
 Rayquaza,Air Slash,Ancient Power,X,X
+Jirachi,Confusion,Doom Desire,X,X
+Jirachi,Confusion,Psychic,X,X
+Jirachi,Confusion,Dazzling Gleam,X,X
+Jirachi,Charge Beam,Doom Desire,X,X
+Jirachi,Charge Beam,Psychic,X,X
+Jirachi,Charge Beam,Dazzling Gleam,X,X
+Deoxys,Counter,Zap Cannon,X,X
+Deoxys,Counter,Swift,X,X
+Deoxys,Counter,Psycho Boost,X,X
+Deoxys,Zen Headbutt,Zap Cannon,X,X
+Deoxys,Zen Headbutt,Swift,X,X
+Deoxys,Zen Headbutt,Psycho Boost,X,X

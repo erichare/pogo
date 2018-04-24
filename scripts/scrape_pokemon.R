@@ -3,7 +3,7 @@ library(dplyr)
 library(tidyr)
 library(readr)
 
-poke_inds <- 1:384
+poke_inds <- 1:386
 base_url <- "https://pokemongo.gamepress.gg/pokemon/"
 urls <- paste0(base_url, poke_inds)
 
@@ -44,7 +44,7 @@ pokemon_data <- lapply(urls, function(url) {
             html_text()
         
         pokemon_move_grades <- full_html %>%
-            html_table()
+            html_table(fill = TRUE)
         pokemon_move_grades <- pokemon_move_grades[[1]]
         if ("Quick" %in% names(pokemon_move_grades)) {
             pokemon_move_grades$Quick <- sapply(strsplit(pokemon_move_grades$Quick, "\n"), `[`, 1)
@@ -87,19 +87,38 @@ move_data <- lapply(all_moves, function(move) {
     return(result)
 })
 
-move_df <- plyr:::rbind.fill(move_data) %>%
-    cbind(Name = all_moves) %>%
+fast_moves <- move_data[sapply(move_data, `[`, 1, 1) == "Fast Move"]
+charge_moves <- move_data[sapply(move_data, `[`, 1, 1) == "Charge Move"]
+
+fast_move_df <- plyr:::rbind.fill(fast_moves) %>%
+    cbind(Name = all_moves[sapply(move_data, `[`, 1, 1) == "Fast Move"]) %>%
     mutate_all(funs(as.character)) %>%
     select(Name, everything())
-move_df$`Damage Window` <- as.numeric(gsub(" seconds", "", move_df$`Damage Window`))
-move_df$`Move Cooldown` <- as.numeric(gsub(" seconds", "", move_df$`Move Cooldown`))
-move_df$`Charge Energy` <- as.numeric(gsub(" Energy", "", move_df$`Charge Energy`))
+fast_move_df$`Damage Window` <- as.numeric(gsub(" seconds", "", fast_move_df$`Damage Window`))
+fast_move_df$`Move Cooldown` <- as.numeric(gsub(" seconds", "", fast_move_df$`Move Cooldown`))
 
-move_df <- move_df %>%
+fast_move_df <- fast_move_df %>%
     mutate_at(vars(`Base Power`, `Energy Delta`, `Damage Per Second`, `Energy Per Second`), funs(as.numeric)) %>%
-    arrange(Name)
+    arrange(Name) %>%
+    select(-`Move Type`) %>%
+    rename(Type = `Pokemon Type`)
 
-write_csv(move_df, "data/poke_moves.csv")
+charge_move_df <- plyr:::rbind.fill(charge_moves) %>%
+    cbind(Name = all_moves[sapply(move_data, `[`, 1, 1) == "Charge Move"]) %>%
+    mutate_all(funs(as.character)) %>%
+    select(Name, everything())
+charge_move_df$`Damage Window` <- as.numeric(gsub(" seconds", "", charge_move_df$`Damage Window`))
+charge_move_df$`Move Cooldown` <- as.numeric(gsub(" seconds", "", charge_move_df$`Move Cooldown`))
+charge_move_df$`Charge Energy` <- as.numeric(gsub(" Energy", "", charge_move_df$`Charge Energy`))
+
+charge_move_df <- charge_move_df %>%
+    mutate_at(vars(`Base Power`, `Damage per Energy`, `Damage Per Second`, `DPE*DPS`), funs(as.numeric)) %>%
+    arrange(Name) %>%
+    select(-`Move Type`) %>%
+    rename(Type = `Pokemon Type`)
+
+write_csv(fast_move_df, "data/poke_fast_moves.csv")
+write_csv(charge_move_df, "data/poke_charge_moves.csv")
 
 all_grades <- lapply(pokemon_data, function(x) {
     if (is.null(x$grades)) return(NULL)

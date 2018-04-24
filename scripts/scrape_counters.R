@@ -12,7 +12,7 @@ raid_bosses <- read_html("full_counters.html") %>%
 raid_bosses_url <- html_attr(raid_bosses, "href")
 raid_bosses_names <- gsub("  \n\n\n ", "", html_text(raid_bosses))
 
-mydf <- data.frame(name = raid_bosses_names, url = raid_bosses_url)
+mydf <- data.frame(name = raid_bosses_names, url = paste0(base_url, raid_bosses_url))
 
 myres <- apply(mydf, 1, function(x) {
     cat(x[1], "\n")

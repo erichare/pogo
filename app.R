@@ -12,7 +12,9 @@ raid_bosses <- read_csv("data/raid_counters.csv") %>%
     mutate(Type = factor(Type, levels = c("Supreme", "Good", "Glass", "Tank")))
 pokes <- read_csv("data/poke_stats.csv")
 attackers <- read_csv("data/poke_grades.csv")
-moves <- read_csv("data/poke_moves.csv")
+
+fast_moves <- read_csv("data/poke_fast_moves.csv")
+charge_moves <- read_csv("data/poke_charge_moves.csv")
 
 type_colors <- c("blue", "darkblue", "grey", "peru", "lightgreen", "yellow", "pink", "darkred", "orangered1", "purple3", "darkgreen", "bisque3", "lightblue", "purple", "indianred2", "lightsteelblue1", "black", "slategray2", "purple4", "pink")
 names(type_colors) <- c("Water", "Dragon", "Normal", "Rock", "Bug", "Electric", "Fairy", "Fighting", "Fire", "Ghost", "Grass", "Ground", "Ice", "Poison", "Psychic", "Steel", "Dark", "Flying", "Ghost", "Fairy")
@@ -60,8 +62,10 @@ ui <- fluidPage(theme = shinytheme("cerulean"),
                          dataTableOutput("poke_stats")
                 ),
                 tabPanel("Move Statistics",
-                         h4("Statistics by Move"),
-                         dataTableOutput("move_stats")
+                         h4("Statistics by Fast Move"),
+                         dataTableOutput("fast_move_stats"),
+                         h4("Statistics by Charge Move"),
+                         dataTableOutput("charge_move_stats")
                 )
             )
         )
@@ -95,8 +99,8 @@ server <- function(input, output, session) {
     
     output$type_coverage <- renderPlot({
         result <- mydat() %>%
-            left_join(select(moves, Name, `Quick Type` = `Pokemon Type`), by = c("Quick" = "Name")) %>%
-            left_join(select(moves, Name, `Charge Type` = `Pokemon Type`), by = c("Charge" = "Name")) %>%
+            left_join(select(fast_moves, Name, `Quick Type` = `Type`), by = c("Quick" = "Name")) %>%
+            left_join(select(charge_moves, Name, `Charge Type` = `Type`), by = c("Charge" = "Name")) %>%
             left_join(select(pokes, Name, `First Pokemon Type` = `First Type`), by = c("Pokemon" = "Name")) %>%
             left_join(select(pokes, Name, `Second Pokemon Type` = `Second Type`), by = c("Pokemon" = "Name"))
         
@@ -168,8 +172,12 @@ server <- function(input, output, session) {
         return(pokes)
     })
     
-    output$move_stats <- renderDataTable({
-        return(moves)
+    output$fast_move_stats <- renderDataTable({
+        return(fast_moves)
+    })
+    
+    output$charge_move_stats <- renderDataTable({
+        return(charge_moves)
     })
 }
 

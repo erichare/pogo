@@ -149,7 +149,7 @@ Dratini,Dragon,NA,119,94,82,0.5,0.5,0.09,25,10,5,0.4
 Dragonair,Dragon,NA,163,138,122,0.5,0.5,0.06,100,NA,5,0.1
 Dragonite,Dragon,Flying,263,201,182,0.5,0.5,0.05,NA,NA,5,0.05
 Mewtwo,Psychic,NA,300,182,193,NA,NA,0.1,NA,NA,20,0.06
-Mew,Psychic,NA,210,210,200,NA,NA,0.1,NA,NA,20,0.03
+Mew,Psychic,NA,210,210,200,NA,NA,0.1,NA,NA,20,1
 Chikorita,Grass,NA,92,122,90,0.125,0.875,0.1,25,5,3,0.2
 Bayleef,Grass,NA,122,155,120,0.125,0.875,0.07,100,NA,3,0.125
 Meganium,Grass,NA,168,202,160,0.125,0.875,0.05,NA,NA,3,0.05
@@ -383,3 +383,5 @@ Latios,Dragon,Psychic,268,228,160,0,1,0.01,NA,NA,20,0.02
 Kyogre,Water,NA,270,251,182,NA,NA,0.01,NA,NA,20,0.02
 Groudon,Ground,NA,270,251,182,NA,NA,0.01,NA,NA,20,0.02
 Rayquaza,Dragon,Flying,284,170,191,NA,NA,0.01,NA,NA,20,0.02
+Jirachi,Psychic,Steel,210,210,200,NA,NA,0.01,NA,NA,20,0.02
+Deoxys,Psychic,NA,345,115,100,NA,NA,0.01,NA,NA,20,0.02
